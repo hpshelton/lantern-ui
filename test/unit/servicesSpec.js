@@ -11,7 +11,7 @@ describe('The service', function() {
   describe('logFactoryService', function () {
     var service, defaultLogger, customLogger;
 
-    beforeEach(inject(function ($injector, logFactory) {
+    beforeEach(inject(function (logFactory) {
       service = logFactory;
       defaultLogger = service();
       customLogger = service("CustomCtrl");
@@ -51,4 +51,42 @@ describe('The service', function() {
       expect(console.debug).toHaveBeenCalledWith('[CustomCtrl]', 'Custom component debug output');
     });
   });
+
+  describe('apiService', function () {
+    var service, httpBackend;
+    var API_URL_PREFIX = 'app/api/version';
+
+    beforeEach(module(function ($provide) {
+      $provide.value('API_URL_PREFIX', API_URL_PREFIX);
+    }));
+
+    beforeEach(inject(function ($injector, apiSrvc) {
+      httpBackend = $injector.get('$httpBackend');
+      service = apiSrvc;
+    }));
+
+    it('defines a API service', function () {
+      expect(service).not.toEqual(undefined);
+      expect(service).not.toEqual(null);
+      expect(typeof service.interaction).toEqual('function');
+      expect(typeof service.exception).toEqual('function');
+    });
+
+    it('makes the correct HTTP POST when interaction() is called', function () {
+      var path = '/settings/autoReport';
+      var data = { path: path, value: false };
+
+      httpBackend.expect('POST', API_URL_PREFIX + '/interaction/set', data).respond(200, '');
+
+      service.interaction('set', data);
+    });
+
+    it('makes the correct HTTP POST when exception() is called', function () {
+      var data = { msg: 'Some exception data' };
+
+      httpBackend.expect('POST', API_URL_PREFIX + '/exception', data).respond(200, '');
+
+      service.exception(data);
+    });
+  });  
 });
